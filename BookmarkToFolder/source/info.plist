@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>com.craigstowers.bookmarktofolder</string>
+	<key>category</key>
+	<string>Internet</string>
+	<key>connections</key>
+	<dict>
+		<key>E4DC6CAA-D78C-4FD5-9536-897D425C9344</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D5CF944E-0142-4AA0-B31E-C5D8115C143A</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Craig Stowers</string>
+	<key>description</key>
+	<string>Adds current URL to specified Safari bookmark folder</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>Bookmark to Folder</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>bookmark</string>
+				<key>subtext</key>
+				<string></string>
+				<key>text</key>
+				<string>Add bookmark to folder</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>E4DC6CAA-D78C-4FD5-9536-897D425C9344</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>applescript</key>
+				<string>to waitForAppLaunch(appname)	if application appname is not running then				tell application appname to launch				tell application "System Events"			repeat until visible of process appname is false				set visible of process appname to false				delay 0.05			end repeat		end tell	end ifend waitForAppLaunchto forceAppToFront(appname)	tell application "System Events"				set frontApp to name of first application process whose frontmost is true		repeat while frontApp is not "Safari"			tell application "Safari" to activate			delay 0.05			set frontApp to name of first application process whose frontmost is true		end repeat	end tellend forceAppToFrontto getFrontApplication()	tell application "System Events" to return name of first application process whose frontmost is trueend getFrontApplicationto getCurrentURL()		set frontApp to getFrontApplication()	if frontApp is "Safari" then		tell application "Safari" to return URL of current tab of front window	end if			if frontApp is "firefox" then		tell application "System Events" to tell its process "firefox"			keystroke "l" using command down			keystroke "c" using command down			delay 0.1						return (the clipboard as text)					end tell			end if		return ""	end getCurrentURLto showAddBookmarkPrompt()	tell application "System Events"				my forceAppToFront("Safari")		tell its process "Safari"			set bookmarkButton to (menu item "Add Bookmark…" of menu "Bookmarks" of menu bar 1)						set timeoutCount to 0			repeat while not enabled of (get properties of bookmarkButton)				my forceAppToFront("Safari")				set timeoutCount to timeoutCount + 1				if timeoutCount is greater than 100 then					display dialog ("timed out adding bookmark")					return				end if				delay 0.01			end repeat									click (bookmarkButton)			set timeoutCount to 0						my forceAppToFront("Safari")			repeat while not (exists sheet 1 of front window)				my forceAppToFront("Safari")								delay 0.01								set timeoutCount to timeoutCount + 1				if timeoutCount is greater than 100 then					display dialog ("timed out saving bookmark")					return				end if							end repeat		end tell	end tell	end showAddBookmarkPromptto waitForMenubarButtonEnabled(menuButton)	tell application "System Events" to tell its process "Safari"		set timeoutCount to 0		repeat while not enabled of (get properties of menuButton)			my forceAppToFront("Safari")			set timeoutCount to timeoutCount + 1			if timeoutCount is greater than 100 then				display dialog ("timed out")				return			end if			delay 0.01		end repeat	end tell	end waitForMenubarButtonEnabledto createFolder(folderName)	tell application "System Events" to tell its process "Safari"		my forceAppToFront("Safari")		set newFolderButton to (menu item "Add Bookmark Folder" of menu "Bookmarks" of menu bar 1)				my waitForMenubarButtonEnabled(newFolderButton)				click (newFolderButton)				delay 0.2				keystroke folderName				key code 36		delay 0.02				repeat while not (exists (menu item "Hide Bookmarks" of menu "Bookmarks" of menu bar 1))			delay 0.01		end repeat				set hideButton to (menu item "Hide Bookmarks" of menu "Bookmarks" of menu bar 1)		my waitForMenubarButtonEnabled(hideButton)		click (hideButton)	end tell		end createFolderon alfred_script(q)	set bookmarkFolder to "Bookmarks"		if q is not equal to "" then		set bookmarkFolder to q	end if			set initialApp to getFrontApplication()		set currentURL to getCurrentURL()	if currentURL is equal to "" then		display dialog ("Can't get URL")		return	end if			my waitForAppLaunch("Safari")	my forceAppToFront("Safari")			if initialApp is not "Safari" then				set shellScript to "open -a Safari '" &amp; currentURL &amp; "'"		do shell script shellScript	end if		tell application "System Events"				tell its process "Safari"			set stopButton to (menu item "Stop" of menu "View" of menu bar 1)						my showAddBookmarkPrompt()			click (stopButton)						tell sheet 1 of front window								click pop up button 1				if not ((menu items of menu 1 of pop up button 1 whose name is bookmarkFolder) exists) then					key code 53					click button "Cancel"					my createFolder(bookmarkFolder)					my showAddBookmarkPrompt()					click pop up button 1				end if				click (menu items of menu 1 of pop up button 1 whose name is bookmarkFolder)				click button "Add"			end tell					end tell	end tell		if initialApp is not equal to "Safari" then		tell application "Safari"			close current tab of front window without saving		end tell				tell application "System Events"			set visible of process "Safari" to false		end tell						tell application "Firefox" to activate	end if	end alfred_script</string>
+				<key>cachescript</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.applescript</string>
+			<key>uid</key>
+			<string>D5CF944E-0142-4AA0-B31E-C5D8115C143A</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>This GUI script copies the url from Firefox or Safari and adds a bookmark to the specified folder in Safari. If folder does not exist it will be created. I'll add support for other browsers in the future. 
+
+As this is a simple GUI script using AppleScript, it's prone to hicups. I've fine tuned the delays around the speed of my system but I'm happy to help make the script more "system agnostic", so let me know if you have problems. Where possible, my script is "aware" of when certain GUI events are completed in order to proceed, but it's always a challenge with GUI scripting.
+
+Reasoning behind this script:
+I use Firefox while docked and Safari undocked (to save battery), and I was bothered it was so difficult to sync bookmarks between browsers. Using Safari bookmarks as my "single source" system seemed wise as Alfred launches Safari bookmarks in whichever broswer is system default.
+
+https://github.com/Craig-Stowers/</string>
+	<key>uidata</key>
+	<dict>
+		<key>D5CF944E-0142-4AA0-B31E-C5D8115C143A</key>
+		<dict>
+			<key>xpos</key>
+			<integer>420</integer>
+			<key>ypos</key>
+			<integer>460</integer>
+		</dict>
+		<key>E4DC6CAA-D78C-4FD5-9536-897D425C9344</key>
+		<dict>
+			<key>note</key>
+			<string>Input argument is the folder name. If you change to "Argument Optional" and leave blank, the bookmark will be placed at root.</string>
+			<key>xpos</key>
+			<integer>165</integer>
+			<key>ypos</key>
+			<integer>460</integer>
+		</dict>
+	</dict>
+	<key>variablesdontexport</key>
+	<array/>
+	<key>version</key>
+	<string>0.1</string>
+	<key>webaddress</key>
+	<string>https://github.com/Craig-Stowers/</string>
+</dict>
+</plist>
